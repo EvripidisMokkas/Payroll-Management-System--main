@@ -26,5 +26,6 @@
   </header>
   <main class="page-content">{% block content %}{% endblock %}</main>
   {% endblock %}
+  {% if user.is_authenticated %}{% include "includes/assistant.html" %}{% endif %}
 </body>
 </html>

@@ -6,6 +6,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-payroll}:${POSTGRES_PASSWORD:-payroll}@db:5432/${POSTGRES_DB:-payroll}
       CELERY_BROKER_URL: redis://redis:6379/0
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:latest}
     volumes:
       - .:/app
     ports:

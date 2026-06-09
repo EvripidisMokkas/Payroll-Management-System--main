@@ -1,0 +1,17 @@
+{% load static %}
+<button class="assistant-launcher" id="assistant-launcher" type="button" aria-label="Open assistant">AI</button>
+<aside class="assistant-panel" id="assistant-panel" hidden>
+  <header><div><strong>Payflow Assistant</strong><small>Ollama-powered, RBAC-aware</small></div><button id="assistant-close" type="button">×</button></header>
+  <label>Organization
+    <select id="assistant-organization">
+      {% for organization in workspace_organizations %}<option value="{{ organization.pk }}">{{ organization.name }}</option>{% endfor %}
+    </select>
+  </label>
+  <div class="assistant-messages" id="assistant-messages"><p class="assistant-message assistant-bot">Ask me to summarize your workspace, list records, or help with an authorized operation.</p></div>
+  <form id="assistant-form">
+    {% csrf_token %}
+    <textarea id="assistant-input" rows="2" placeholder="What needs attention?"></textarea>
+    <button type="submit">Send</button>
+  </form>
+</aside>
+<script src="{% static 'js/assistant.js' %}" defer></script>

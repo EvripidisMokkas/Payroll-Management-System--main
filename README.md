@@ -1,186 +1,173 @@
-# Payroll Management Platform
+# Payflow Payroll Management Platform
 
-A modular Django foundation for payroll operations, workforce management, financial workflows, compliance, reporting, and risk analysis.
+Payflow is a multi-organization payroll operations platform built with Django. It combines workforce and payroll records,
+financial workflows, secure documents, audit evidence, analytics, operational risk, role-based access, and a locally hosted
+Ollama operations assistant.
+
+The repository is an extensible operational foundation. It is not yet a certified payroll processor, tax filing service, banking
+platform, or autonomous decision-making system. See the [project scope](docs/project-scope.md) and
+[delivery plan](docs/project-plan.md) for the current boundaries and roadmap.
+
+## Capabilities
+
+- Multi-organization tenancy with centralized role-based authorization.
+- Browser workspace for employees, clients, payroll, documents, finance, audit, analytics, risk, and access management.
+- Versioned REST APIs and generated OpenAPI documentation.
+- Effective-dated payroll inputs, lifecycle services, immutable calculation evidence, and approvals.
+- Sensitive-data separation, document retention controls, and tamper-evident audit events.
+- PostgreSQL persistence, Redis-backed Celery tasks, and scheduled jobs.
+- Ollama assistant with role-filtered tools, organization scoping, confirmation-gated writes, and audit logging.
+
+## Documentation
+
+| Document | Purpose |
+| --- | --- |
+| [Documentation index](docs/README.md) | Guide to all project documentation |
+| [Project scope](docs/project-scope.md) | Goals, users, implemented features, boundaries, and success measures |
+| [Delivery plan](docs/project-plan.md) | Stabilization priorities, roadmap phases, and technical debt |
+| [Architecture](docs/architecture.md) | Components, data flow, RBAC, assistant trust boundaries, and deployment |
+| [Security](docs/security.md) | Security controls and engineering requirements |
+| [Data security](docs/data-security.md) | Sensitive-data handling and retention |
+| [Privacy](docs/privacy.md) | Privacy workflows and requirements |
+| [Operations](docs/operations.md) | Production readiness, monitoring, backup, recovery, and incidents |
 
 ## Architecture
 
-The platform uses a domain-oriented monolith that can evolve without prematurely splitting operational workflows across services:
+Payflow is a domain-oriented Django monolith. PostgreSQL is the system of record, Redis is the Celery broker, Celery workers and
+beat handle asynchronous work, and Django REST Framework exposes APIs at `/api/v1/`.
 
-- `payroll_platform/` contains root URL routing, Celery setup, and environment-specific settings.
-- `apps/` contains bounded Django apps for accounts, organizations, employees, clients, payroll, taxation, finance, documents, auditing, analytics, and risk.
-- `templates/` and `static/` provide shared server-rendered UI resources.
-- PostgreSQL is the system of record; Redis is the Celery broker; Celery workers and beat process asynchronous and scheduled jobs.
-- Django REST Framework provides versioned APIs at `/api/v1/`, and drf-spectacular publishes OpenAPI schema and Swagger UI.
-- WhiteNoise serves versioned static assets in production. Gunicorn runs the production WSGI application.
+```text
+Browser / API client
+        |
+        v
+   Django web app <------> Ollama
+        |
+        +----> PostgreSQL
+        +----> Redis <---- Celery worker / beat
+        +----> File storage
+```
 
-### Settings environments
-
-| Environment | Module | Purpose |
-| --- | --- | --- |
-| Development | `payroll_platform.settings.development` | Debugging, local PostgreSQL, console email |
-| Testing | `payroll_platform.settings.testing` | In-memory SQLite, eager Celery tasks, fast password hashing |
-| Production | `payroll_platform.settings.production` | Required secret/hosts, HTTPS redirects, secure cookies, HSTS |
+Domain apps live under `apps/`, platform routing and configuration under `payroll_platform/`, and browser assets under
+`templates/` and `static/`. Read the [architecture guide](docs/architecture.md) for the complete design.
 
 ## Requirements
 
-- Python 3.13+
-- PostgreSQL 17+
-- Redis 8+
-- Docker with Compose (recommended for local development)
+- Docker with Compose, recommended for development
+- Ollama with a tool-capable model for assistant features
+- For local non-Docker development: Python 3.13+, PostgreSQL 17+, and Redis 8+
 
-Dependencies are pinned in `requirements/base.txt`, with development and testing additions in their corresponding files. The stack includes Django, psycopg, Django REST Framework, Celery, Redis, OpenAPI tooling, Matplotlib, ReportLab, and OpenPyXL.
-
-## Quick start with Docker
+## Quick start
 
 ```bash
 cp .env.example .env
-# Replace all placeholder secrets in .env before using shared environments.
 docker compose build
-docker compose run --rm web python manage.py migrate
-docker compose run --rm web python manage.py createsuperuser
-docker compose up
+docker compose up -d
+docker compose exec web python manage.py migrate
+docker compose exec web python manage.py seed_browser_demo
 ```
 
 Open:
 
 - Application: <http://localhost:8000/>
-- Browser login: <http://localhost:8000/login/>
-- Role-aware operations workspace: <http://localhost:8000/dashboard/>
-- Admin: <http://localhost:8000/admin/>
+- Login: <http://localhost:8000/login/>
+- Workspace: <http://localhost:8000/dashboard/>
 - API documentation: <http://localhost:8000/api/docs/>
 - Health check: <http://localhost:8000/health/>
 
-The Compose stack starts the Django development server, PostgreSQL, Redis, a Celery worker, and Celery beat. Stop it with `docker compose down`; add `--volumes` to delete local database and Redis data.
+The Compose stack starts Django, PostgreSQL, Redis, a Celery worker, and Celery beat.
 
-### Browser workspace and RBAC demo
+## Demo accounts
 
-Seed a representative organization, operational records, and one account for each organization role:
+Run `docker compose exec web python manage.py seed_browser_demo` to create representative data and role accounts. All demo users
+use password `Demo123!Pass`.
+
+| Username | Role |
+| --- | --- |
+| `administrator` | Organization administrator |
+| `payroll-operator` | Payroll operator |
+| `employee` | Employee |
+| `auditor` | Auditor |
+| `client` | Client |
+
+Workspace navigation is generated from the centralized `ROLE_ACTIONS` map. Every request also performs server-side organization
+and action authorization; hidden navigation is not treated as an access control.
+
+## Ollama assistant
+
+Install and start a tool-capable Ollama model:
 
 ```bash
-docker compose exec web python manage.py seed_browser_demo
+ollama pull llama3.2
+ollama serve
 ```
 
-All demo users use the password `Demo123!Pass`:
+Docker Compose defaults to:
 
-| Username | Browser capabilities |
-| --- | --- |
-| `administrator` | Full organization workspace, employees, clients, payroll, documents, finance, audit, risk, and role assignment |
-| `payroll-operator` | Employee, payroll, document, client, finance, and analytics operations |
-| `employee` | Read-only payroll, document, finance, and analytics access |
-| `auditor` | Read-only payroll, employee, document, finance, audit, analytics, and risk access |
-| `client` | Read-only payroll, document, finance, audit, and analytics access |
+```env
+OLLAMA_BASE_URL=http://host.docker.internal:11434
+OLLAMA_MODEL=llama3.2:latest
+```
 
-Workspace navigation is generated from the centralized `ROLE_ACTIONS` authorization map. Every browser request also performs server-side organization and action authorization; hiding a navigation item is not treated as an access control.
+The assistant currently supports authorized workspace summaries, recent-record listings, audit-note creation, and risk-entry
+creation. The model only sees tools allowed for the user's role. The server repeats RBAC and tenant checks during execution, and
+writes require a short-lived signed confirmation before they are performed and audited.
 
-## Local setup without Docker
+## Configuration
 
-Start PostgreSQL and Redis locally, then:
+Configuration is read from environment variables. `.env.example` documents available values; never commit `.env` or credentials.
+
+| Variable | Purpose | Development default |
+| --- | --- | --- |
+| `DJANGO_SECRET_KEY` | Django signing and cryptographic secret | Unsafe development placeholder |
+| `DEBUG` | Django debug mode | `false` in base, `true` in development |
+| `DATABASE_URL` | PostgreSQL connection | Local payroll database |
+| `CELERY_BROKER_URL` | Redis broker | `redis://localhost:6379/0` |
+| `DJANGO_TIME_ZONE` | Application time zone | `UTC` |
+| `OLLAMA_BASE_URL` | Ollama API URL | `http://localhost:11434` |
+| `OLLAMA_MODEL` | Tool-capable assistant model | `llama3.2:latest` |
+| `OLLAMA_TIMEOUT_SECONDS` | Ollama request timeout | `30` |
+| `ASSISTANT_CONFIRMATION_MAX_AGE` | Write-confirmation lifetime in seconds | `300` |
+
+## Local development without Docker
+
+Start PostgreSQL and Redis, then:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements/development.txt
 cp .env.example .env
-```
-
-Update `.env` so `DATABASE_URL` and `CELERY_BROKER_URL` address local services (for example, `localhost` instead of Compose service names), then run:
-
-```bash
 python manage.py migrate
-python manage.py createsuperuser
 python manage.py runserver
 ```
 
-In separate terminals, run background services:
+Run Celery in separate terminals:
 
 ```bash
 celery -A payroll_platform worker --loglevel=info
 celery -A payroll_platform beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
-## Configuration
-
-Configuration is read from environment variables; `.env.example` documents safe placeholders. Never commit `.env` or real credentials.
-
-| Variable | Description | Development default |
-| --- | --- | --- |
-| `DJANGO_SETTINGS_MODULE` | Active settings module | `payroll_platform.settings.development` via `manage.py` |
-| `DJANGO_SECRET_KEY` | Cryptographic signing secret; mandatory in production | Unsafe development placeholder |
-| `DEBUG` | Enable Django debug mode | `false` in base, `true` in development |
-| `DJANGO_ALLOWED_HOSTS` | Comma-separated hostnames | `localhost,127.0.0.1` |
-| `DJANGO_CSRF_TRUSTED_ORIGINS` | Comma-separated HTTPS origins | Empty |
-| `DATABASE_URL` | PostgreSQL connection URL | Local payroll database |
-| `DATABASE_CONN_MAX_AGE` | Persistent DB connection lifetime in seconds | `60` |
-| `CELERY_BROKER_URL` | Redis broker URL | `redis://localhost:6379/0` |
-| `CELERY_RESULT_BACKEND` | Celery result storage | `django-db` |
-| `DJANGO_TIME_ZONE` | Application time zone | `UTC` |
-| `DJANGO_LOG_LEVEL` | Console logging threshold | `INFO` |
-
-## Database migrations
-
-Create and review migrations whenever models change:
-
-```bash
-python manage.py makemigrations
-python manage.py migrate
-python manage.py showmigrations
-```
-
-For deployment, run migrations once as a release task rather than concurrently in every web container. Back up PostgreSQL before destructive or irreversible changes.
-
-## Testing and quality checks
-
-Tests use the isolated testing settings module and do not require PostgreSQL or Redis:
+## Testing and quality
 
 ```bash
 ruff format --check .
 ruff check .
-mypy apps/payroll/services apps/taxation/services/engine.py apps/finance/services apps/organizations/services.py apps/organizations/mixins.py
-DJANGO_SETTINGS_MODULE=payroll_platform.settings.testing python manage.py makemigrations accounts --check --dry-run
-DJANGO_SETTINGS_MODULE=payroll_platform.settings.testing coverage run manage.py test
-coverage report
-coverage json
-python scripts/check_high_risk_coverage.py
-bandit -q -r apps payroll_platform -x '*/migrations/*,*/tests.py'
+DJANGO_SETTINGS_MODULE=payroll_platform.settings.testing python manage.py test
+bandit -q -r apps payroll_platform -x '*/migrations/*'
 pip-audit -r requirements/base.txt
 ```
 
-Run Django's production deployment checks with real production-style environment values:
+The current repository has known full-suite failures documented in the [delivery plan](docs/project-plan.md). Resolve these before
+a controlled pilot or production deployment.
 
-```bash
-DJANGO_SETTINGS_MODULE=payroll_platform.settings.production \
-DJANGO_SECRET_KEY='replace-with-a-long-random-production-secret' \
-DJANGO_ALLOWED_HOSTS='payroll.example.com' \
-DATABASE_URL='postgresql://user:password@db:5432/payroll' \
-python manage.py check --deploy
-```
+## Production
 
-## Deployment
+The Compose topology is for development. Production requires managed data services, immutable images, TLS, secrets management,
+private file storage, centralized logs and metrics, alerting, backup verification, restore exercises, and security review.
+Follow the [operations runbook](docs/operations.md), [security guide](docs/security.md), and
+[data-security guide](docs/data-security.md).
 
-1. Build an immutable image from `Dockerfile` and publish it to a private registry.
-2. Provision managed PostgreSQL and Redis with encryption, backups, monitoring, and network restrictions.
-3. Inject production environment variables from a secrets manager. Set trusted hosts/origins and a unique, high-entropy secret key.
-4. Run `python manage.py migrate --noinput` as a single release job.
-5. Run `python manage.py collectstatic --noinput` while building or releasing the image.
-6. Start web containers with the Dockerfile's Gunicorn command and separately start worker and beat processes.
-7. Terminate TLS at the load balancer or proxy and forward `X-Forwarded-Proto`. The production settings enforce HTTPS, secure cookies, HSTS, and clickjacking protection.
-8. Point liveness checks to `/health/`; add database and broker readiness checks appropriate for the hosting platform.
-9. Centralize container logs and alert on application errors, failed tasks, resource pressure, and unusual access patterns.
+## License
 
-For production image startup automation, set `RUN_MIGRATIONS=true` and/or `COLLECT_STATIC=true` only when the process is intentionally responsible for those one-time operations.
-
-## Tenant authorization and account security
-
-`accounts.User` is the platform's custom user model. Do not change `AUTH_USER_MODEL` or create application migrations that reference Django's built-in user model. Organization access is granted through `OrganizationMembership`; users may hold different roles in multiple organizations. The canonical administrator, payroll operator, employee, auditor, and client groups and explicit permissions are synchronized after migrations.
-
-All tenant-owned models should inherit `OrganizationScopedModel`, callers should begin queries with `.for_user(user)`, and service/view code must call `authorize()` or use `OrganizationAccessMixin` before accessing a caller-supplied organization ID. Auditors are read-only except for append-only audit annotations.
-
-Authentication endpoints are under `/api/v1/accounts/`. Optional TOTP MFA is enabled per account, failed passwords trigger temporary lockout, authenticated sessions expire after the configured idle period, and login rotates the session key. Relevant environment variables are `ACCOUNT_LOCKOUT_THRESHOLD`, `ACCOUNT_LOCKOUT_DURATION`, `SESSION_IDLE_TIMEOUT`, and `SESSION_COOKIE_AGE`.
-
-## Payroll domain data model and sensitive-data handling
-
-Organization, client, and employee records are organization-scoped. Payroll inputs that can change over time—including
-salary, benefits, deductions, commissions, insurance, tax profiles, contracts, employment history, and product assignments—
-are effective-dated so prior payroll calculations can be reproduced. Restricted banking, tax, and personal data is stored in
-separate models with dedicated permissions. See [the data security and retention guide](docs/data-security.md) before building
-services, serializers, exports, or retention jobs that access these records.
+See [LICENSE](LICENSE).

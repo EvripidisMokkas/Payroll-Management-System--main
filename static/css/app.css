@@ -168,3 +168,33 @@ td strong { color: #2c3548; }
   .side-nav { grid-template-columns: repeat(2, 1fr); }
   .dashboard-main { padding: 1.5rem 1rem 3rem; }
 }
+.assistant-launcher {
+  position: fixed; right: 24px; bottom: 24px; z-index: 30; width: 54px; height: 54px;
+  border: 0; border-radius: 50%; background: #2563eb; color: #fff; font-weight: 800;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, .35); cursor: pointer;
+}
+.assistant-panel {
+  position: fixed; right: 24px; bottom: 90px; z-index: 30; width: min(390px, calc(100vw - 32px));
+  max-height: min(650px, calc(100vh - 120px)); padding: 16px; border: 1px solid #dbe3ef;
+  border-radius: 18px; background: #fff; box-shadow: 0 24px 60px rgba(15, 23, 42, .22);
+}
+.assistant-panel[hidden] { display: none; }
+.assistant-panel header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px; }
+.assistant-panel header div { display: grid; gap: 2px; }
+.assistant-panel header small { color: #64748b; }
+.assistant-panel header button { border: 0; background: transparent; font-size: 24px; cursor: pointer; }
+.assistant-panel label { display: grid; gap: 5px; color: #475569; font-size: 12px; font-weight: 700; }
+.assistant-panel select, .assistant-panel textarea {
+  width: 100%; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 9px; padding: 9px;
+  background: #fff; color: #0f172a;
+}
+.assistant-messages { min-height: 220px; max-height: 360px; overflow-y: auto; margin: 12px 0; padding: 10px; border-radius: 12px; background: #f8fafc; }
+.assistant-message { width: fit-content; max-width: 88%; margin: 7px 0; padding: 9px 11px; border-radius: 12px; white-space: pre-wrap; }
+.assistant-bot { background: #fff; border: 1px solid #e2e8f0; }
+.assistant-user { margin-left: auto; background: #2563eb; color: #fff; }
+.assistant-panel form { display: flex; gap: 8px; align-items: end; }
+.assistant-panel form button, .assistant-confirm {
+  border: 0; border-radius: 9px; padding: 10px 13px; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer;
+}
+.assistant-confirm { margin-left: 10px; background: #15803d; }
+.assistant-confirm:disabled { opacity: .55; }

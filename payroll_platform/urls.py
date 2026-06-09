@@ -8,13 +8,14 @@ from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 from apps.accounts.views import SecureLoginView
-from payroll_platform.views import dashboard, health_check, home, workspace_domain, workspace_record_form
+from payroll_platform.views import assistant_chat, dashboard, health_check, home, workspace_domain, workspace_record_form
 
 urlpatterns = [
     path("", home, name="home"),
     path("login/", SecureLoginView.as_view(), name="login"),
     path("logout/", auth_views.LogoutView.as_view(), name="logout"),
     path("dashboard/", dashboard, name="dashboard"),
+    path("assistant/chat/", assistant_chat, name="assistant-chat"),
     path("workspace/<slug:domain_slug>/", workspace_domain, name="workspace-domain"),
     path("workspace/<slug:domain_slug>/new/", workspace_record_form, name="workspace-create"),
     path("workspace/<slug:domain_slug>/<int:record_id>/edit/", workspace_record_form, name="workspace-edit"),

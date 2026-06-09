@@ -3,6 +3,8 @@
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.forms import modelform_factory
+import json
+
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.cache import never_cache
@@ -14,6 +16,7 @@ from apps.organizations.models import Organization, OrganizationMembership
 from apps.organizations.services import ROLE_ACTIONS, assign_membership, authorize
 from apps.payroll.models import PayrollLifecycle, PayrollPeriod
 from payroll_platform.workspace import DOMAINS
+from payroll_platform.assistant import chat
 
 
 def home(request):
@@ -184,3 +187,21 @@ def workspace_record_form(request, domain_slug, record_id=None):
 @never_cache
 def health_check(request):
     return JsonResponse({"status": "ok"})
+
+
+@login_required
+def assistant_chat(request):
+    if request.method != "POST":
+        return JsonResponse({"error": "POST is required."}, status=405)
+    try:
+        payload = json.loads(request.body or "{}")
+        result = chat(
+            request.user,
+            payload.get("organization_id"),
+            str(payload.get("message", "")).strip(),
+            payload.get("history"),
+            payload.get("confirmed_action"),
+        )
+        return JsonResponse(result)
+    except (ValueError, PermissionDenied) as exc:
+        return JsonResponse({"error": str(exc)}, status=403 if isinstance(exc, PermissionDenied) else 400)
