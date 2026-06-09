@@ -1,0 +1,46 @@
+name: Quality and test suite
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements/testing.txt
+      - name: Formatting
+        run: ruff format --check .
+      - name: Linting
+        run: ruff check .
+      - name: Type checking high-risk services
+        run: mypy apps/payroll/services apps/taxation/services/engine.py apps/finance/services apps/organizations/services.py apps/organizations/mixins.py
+      - name: Migration drift and application checks
+        env:
+          DJANGO_SETTINGS_MODULE: payroll_platform.settings.testing
+        run: |
+          python manage.py makemigrations accounts --check --dry-run
+          python manage.py migrate --noinput
+          python manage.py migrate --check
+          python manage.py check
+      - name: Security analysis
+        run: |
+          bandit -q -r apps payroll_platform -x '*/migrations/*,*/tests.py'
+          pip-audit -r requirements/base.txt
+      - name: Tests and coverage thresholds
+        env:
+          DJANGO_SETTINGS_MODULE: payroll_platform.settings.testing
+        run: |
+          coverage run manage.py test
+          coverage report
+          coverage json
+          python scripts/check_high_risk_coverage.py

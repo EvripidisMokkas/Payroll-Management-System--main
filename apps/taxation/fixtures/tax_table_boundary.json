@@ -1,0 +1,56 @@
+{
+  "jurisdiction": "US-TEST",
+  "version": "2026.1",
+  "effective_from": "2026-01-01",
+  "filing_statuses": [
+    {
+      "code": "single",
+      "name": "Single"
+    }
+  ],
+  "brackets": [
+    {
+      "filing_status": "single",
+      "lower_bound": "0",
+      "upper_bound": "1000",
+      "rate": "0.10"
+    },
+    {
+      "filing_status": "single",
+      "lower_bound": "1000",
+      "upper_bound": null,
+      "rate": "0.20"
+    }
+  ],
+  "tax_years": [
+    {
+      "year": 2026,
+      "starts_on": "2026-01-01",
+      "ends_on": "2026-12-31"
+    }
+  ],
+  "allowances": [
+    {
+      "code": "standard",
+      "amount": "100.00",
+      "filing_status": "single"
+    }
+  ],
+  "contribution_limits": [
+    {
+      "code": "social",
+      "employee_rate": "0.10",
+      "employer_rate": "0.10",
+      "annual_wage_base": "100000",
+      "annual_employee_limit": "10000",
+      "annual_employer_limit": "10000"
+    }
+  ],
+  "employer_taxes": [
+    {
+      "code": "employer",
+      "rate": "0.01",
+      "wage_base": "100000"
+    }
+  ]
+}

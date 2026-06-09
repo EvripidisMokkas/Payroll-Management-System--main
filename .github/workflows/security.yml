@@ -1,0 +1,52 @@
+name: Security and migration checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  application-security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements/testing.txt
+      - name: Dependency vulnerability scan
+        run: pip-audit -r requirements/base.txt
+      - name: Static security analysis
+        run: bandit -q -r apps payroll_platform -x '*/migrations/*,*/tests.py'
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Migration checks
+        env:
+          DJANGO_SETTINGS_MODULE: payroll_platform.settings.testing
+        run: |
+          python manage.py makemigrations accounts --check --dry-run
+          python manage.py migrate --noinput
+          python manage.py migrate --check
+      - name: Django deployment checks
+        env:
+          DJANGO_SETTINGS_MODULE: payroll_platform.settings.production
+          DJANGO_SECRET_KEY: ci-only-long-random-secret-not-for-production
+          DJANGO_ALLOWED_HOSTS: payroll.example.test
+          DJANGO_CSRF_TRUSTED_ORIGINS: https://payroll.example.test
+          FIELD_ENCRYPTION_KEYS: 6hmNid3UE4TyADR1WUj6FmHjVVhWfR8D2OK0hSNB8qU=
+          DATA_FINGERPRINT_KEY: ci-only-fingerprint-key-not-for-production
+        run: python manage.py check --deploy
+      - name: Tests
+        env:
+          DJANGO_SETTINGS_MODULE: payroll_platform.settings.testing
+        run: python manage.py test

@@ -1,0 +1,24 @@
+{% extends "workspace/base.html" %}
+{% block title %}{{ domain.label }} | Payflow{% endblock %}
+{% block workspace_title %}{{ domain.label }}{% endblock %}
+{% block workspace_description %}{{ domain.description }}{% endblock %}
+{% block workspace_content %}
+<section class="panel records-panel">
+  <div class="panel-title">
+    <div><p class="eyebrow">{{ selected_organization.name }}</p><h2>{{ domain.label }} records</h2></div>
+    {% if can_write %}<a class="button button-small" href="{% url 'workspace-create' domain.slug %}?organization={{ selected_organization.pk }}">Create new</a>{% endif %}
+  </div>
+  {% if rows %}
+  <div class="table-wrap"><table><thead><tr>
+    {% for column in columns %}<th>{{ column|title }}</th>{% endfor %}{% if can_write %}<th>Action</th>{% endif %}
+  </tr></thead><tbody>
+    {% for record, values in rows %}<tr>
+      {% for value in values %}<td>{{ value }}</td>{% endfor %}
+      {% if can_write %}<td><a href="{% url 'workspace-edit' domain.slug record.pk %}?organization={{ selected_organization.pk }}">Edit</a></td>{% endif %}
+    </tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}
+  <div class="empty-state"><span>{{ domain.icon }}</span><h3>No {{ domain.label|lower }} records yet</h3><p>This organization has no records in this area.</p>{% if can_write %}<a class="button button-small" href="{% url 'workspace-create' domain.slug %}?organization={{ selected_organization.pk }}">Create first record</a>{% endif %}</div>
+  {% endif %}
+</section>
+{% endblock %}

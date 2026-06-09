@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body_class %}dashboard-page{% endblock %}
+{% block shell %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand brand-light" href="{% url 'dashboard' %}"><span class="brand-mark">P</span><span>Payflow</span></a>
+    <nav class="side-nav">
+      <a href="{% url 'dashboard' %}"><span>▦</span> Overview</a>
+      {% for item in workspace_domains %}
+        <a class="{% if domain.slug == item.slug %}active{% endif %}" href="{% url 'workspace-domain' item.slug %}{% if selected_organization %}?organization={{ selected_organization.pk }}{% endif %}">
+          <span>{{ item.icon }}</span> {{ item.label }}
+        </a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/api/docs/">API documentation</a>
+      {% if user.is_staff %}<a href="/admin/">Django administration</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+  <main class="dashboard-main workspace-main">
+    <header class="workspace-header">
+      <div>
+        <p class="eyebrow">Role-aware workspace</p>
+        <h1>{% block workspace_title %}Operations{% endblock %}</h1>
+        <p>{% block workspace_description %}{% endblock %}</p>
+      </div>
+      {% if workspace_organizations %}
+      <form method="get" class="organization-switcher">
+        <label for="organization">Organization</label>
+        <select id="organization" name="organization" onchange="this.form.submit()">
+          {% for organization in workspace_organizations %}
+            <option value="{{ organization.pk }}" {% if organization.pk == selected_organization.pk %}selected{% endif %}>{{ organization.name }}</option>
+          {% endfor %}
+        </select>
+      </form>
+      {% endif %}
+    </header>
+    {% block workspace_content %}{% endblock %}
+  </main>
+</div>
+{% endblock %}

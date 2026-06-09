@@ -1,0 +1,24 @@
+{% extends "workspace/base.html" %}
+{% block title %}{% if record %}Edit{% else %}Create{% endif %} {{ domain.label }} | Payflow{% endblock %}
+{% block workspace_title %}{% if record %}Edit{% else %}Create{% endif %} {{ domain.label|lower }} record{% endblock %}
+{% block workspace_description %}Changes are scoped to {{ selected_organization.name }} and checked against your assigned role.{% endblock %}
+{% block workspace_content %}
+<section class="panel form-panel">
+  <form method="post" class="workspace-form">
+    {% csrf_token %}<input type="hidden" name="organization" value="{{ selected_organization.pk }}">
+    {% if form.non_field_errors %}<div class="form-alert">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+      <div class="form-field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+        {% if field.errors %}<span class="field-error">{{ field.errors|striptags }}</span>{% endif %}
+      </div>
+    {% endfor %}
+    <div class="form-actions">
+      <a href="{% url 'workspace-domain' domain.slug %}?organization={{ selected_organization.pk }}">Cancel</a>
+      <button class="button button-small" type="submit">Save record</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

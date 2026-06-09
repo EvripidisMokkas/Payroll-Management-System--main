@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ organization.name }} analytics{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/analytics.css' %}">
+<section class="dashboard-heading">
+  <p class="eyebrow">{{ role }} dashboard</p>
+  <h1>{{ organization.name }} analytics</h1>
+  <p>All charts are scoped to this organization and your assigned role. Select “Inspect source records” to verify a chart.</p>
+</section>
+{% if warnings %}<section class="warnings" aria-label="Data quality warnings"><h2>Data-quality warnings</h2><ul>{% for warning in warnings %}<li><strong>{{ warning.code }}</strong> — {{ warning.message }}</li>{% endfor %}</ul></section>{% endif %}
+<section class="chart-grid" aria-label="Financial charts">
+{% for chart in charts %}<article class="chart-card"><p>{{ chart.title }}</p><strong>{{ chart.value }}</strong><div class="bar" aria-label="Value {{ chart.value }}"><span></span></div><a href="{{ chart.source_url }}">Inspect {{ chart.source_count }} source records</a></article>
+{% empty %}<article class="chart-card"><h2>Your dashboard</h2><p>No organization-wide financial charts are available for your role. This protects confidential source records.</p></article>{% endfor %}
+</section>
+<section class="prediction-notice"><h2>Predictions are not guarantees</h2><p>Any prediction shown by the platform is clearly labeled, includes confidence ranges, assumptions, model version, and source-data dates.</p></section>
+{% endblock %}

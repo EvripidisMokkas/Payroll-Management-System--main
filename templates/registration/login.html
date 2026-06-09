@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Sign in | Payflow{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block shell %}
+<main class="auth-shell">
+  <section class="auth-story">
+    <a class="brand brand-light" href="{% url 'home' %}">
+      <span class="brand-mark">P</span><span>Payflow</span>
+    </a>
+    <div class="auth-story-copy">
+      <span class="pill pill-light">Payroll, without the friction</span>
+      <h1>One clear view of every payday.</h1>
+      <p>Run payroll, manage your people, and keep every approval and compliance detail in one secure workspace.</p>
+      <div class="trust-row">
+        <span>Encrypted data</span><span>Audit ready</span><span>Role based access</span>
+      </div>
+    </div>
+  </section>
+  <section class="auth-panel">
+    <div class="login-card">
+      <p class="eyebrow">Welcome back</p>
+      <h2>Sign in to your workspace</h2>
+      <p class="muted">Enter your account details to continue.</p>
+      {% if form.non_field_errors %}
+        <div class="form-alert">{{ form.non_field_errors|striptags }}</div>
+      {% endif %}
+      <form method="post" class="login-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <label for="{{ form.username.id_for_label }}">Username</label>
+        <input id="{{ form.username.id_for_label }}" name="{{ form.username.html_name }}" type="text" value="{{ form.username.value|default:'' }}" autocomplete="username" placeholder="Enter your username" required autofocus>
+        {% if form.username.errors %}<span class="field-error">{{ form.username.errors|striptags }}</span>{% endif %}
+        <div class="label-row"><label for="{{ form.password.id_for_label }}">Password</label><a href="/api/v1/accounts/password-reset/">Forgot password?</a></div>
+        <input id="{{ form.password.id_for_label }}" name="{{ form.password.html_name }}" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+        {% if form.password.errors %}<span class="field-error">{{ form.password.errors|striptags }}</span>{% endif %}
+        <label for="{{ form.mfa_token.id_for_label }}">MFA code <span class="optional">Optional</span></label>
+        <input id="{{ form.mfa_token.id_for_label }}" name="{{ form.mfa_token.html_name }}" type="text" inputmode="numeric" maxlength="6" placeholder="6-digit code">
+        <button class="button login-submit" type="submit">Sign in to Payflow</button>
+      </form>
+      <p class="login-help">Need help? Contact your payroll administrator.</p>
+    </div>
+  </section>
+</main>
+{% endblock %}

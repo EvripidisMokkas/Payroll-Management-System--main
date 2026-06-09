@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | Payflow{% endblock %}
+{% block body_class %}dashboard-page{% endblock %}
+{% block shell %}
+<div class="app-shell">
+  <aside class="sidebar">
+    <a class="brand brand-light" href="{% url 'dashboard' %}"><span class="brand-mark">P</span><span>Payflow</span></a>
+    <nav class="side-nav">
+      <a class="active" href="{% url 'dashboard' %}"><span>▦</span> Overview</a>
+      {% for item in workspace_domains %}<a href="{% url 'workspace-domain' item.slug %}"><span>{{ item.icon }}</span> {{ item.label }}</a>{% endfor %}
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/api/docs/">API documentation</a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sign out</button></form>
+    </div>
+  </aside>
+  <main class="dashboard-main">
+    <header class="dashboard-header">
+      <div><p class="eyebrow">Tuesday, June 9</p><h1>Good to see you, {{ user.first_name|default:user.username }}.</h1><p>Here is what is happening across your payroll workspace.</p></div>
+      <div class="user-chip"><span>{{ user.username|slice:":1"|upper }}</span><div><strong>{{ user.get_full_name|default:user.username }}</strong><small>{% if user.is_superuser %}Administrator{% else %}Team member{% endif %}</small></div></div>
+    </header>
+    <section class="metric-grid">
+      <article class="metric-card"><span class="metric-icon blue">◎</span><p>Total employees</p><h2>{{ employee_count }}</h2><small>{{ active_employee_count }} currently active</small></article>
+      <article class="metric-card"><span class="metric-icon green">◷</span><p>Payroll periods</p><h2>{{ payroll_count }}</h2><small>{{ open_payroll_count }} require attention</small></article>
+      <article class="metric-card"><span class="metric-icon violet">◇</span><p>Active clients</p><h2>{{ client_count }}</h2><small>Across {{ organization_count }} organizations</small></article>
+      <article class="metric-card"><span class="metric-icon orange">$</span><p>Next payroll</p><h2>Ready</h2><small>Review payroll calendar</small></article>
+    </section>
+    <section class="dashboard-grid">
+      <article class="panel payroll-panel">
+        <div class="panel-title"><div><p class="eyebrow">Payroll activity</p><h2>Recent pay periods</h2></div><a href="{% url 'workspace-domain' 'payroll' %}">View all</a></div>
+        {% if recent_periods %}
+        <div class="table-wrap"><table><thead><tr><th>Organization</th><th>Period</th><th>Pay date</th><th>Status</th></tr></thead><tbody>
+          {% for period in recent_periods %}<tr><td><strong>{{ period.organization.name }}</strong></td><td>{{ period.period_start|date:"M j" }} - {{ period.period_end|date:"M j, Y" }}</td><td>{{ period.pay_date|date:"M j, Y" }}</td><td><span class="status status-{{ period.status }}">{{ period.get_status_display }}</span></td></tr>{% endfor %}
+        </tbody></table></div>
+        {% else %}
+        <div class="empty-state"><span>◷</span><h3>No payroll periods yet</h3><p>Create your first pay schedule and period to begin running payroll.</p><a class="button button-small" href="{% url 'workspace-domain' 'payroll' %}">Open payroll</a></div>
+        {% endif %}
+      </article>
+      <aside class="panel quick-panel">
+        <div class="panel-title"><div><p class="eyebrow">Shortcuts</p><h2>Quick actions</h2></div></div>
+        {% if "employee.read" in workspace_actions %}<a href="{% url 'workspace-domain' 'employees' %}"><span class="quick-icon blue">+</span><div><strong>Manage employees</strong><small>Create and update team profiles</small></div><b>›</b></a>{% endif %}
+        {% if "payroll.read" in workspace_actions %}<a href="{% url 'workspace-domain' 'payroll' %}"><span class="quick-icon green">◷</span><div><strong>Manage payroll</strong><small>Prepare your next payroll run</small></div><b>›</b></a>{% endif %}
+        {% if "client.read" in workspace_actions %}<a href="{% url 'workspace-domain' 'clients' %}"><span class="quick-icon violet">◇</span><div><strong>Manage clients</strong><small>Review client organizations</small></div><b>›</b></a>{% endif %}
+        {% if "risk.read" in workspace_actions %}<a href="{% url 'workspace-domain' 'risk' %}"><span class="quick-icon orange">!</span><div><strong>Review risk</strong><small>Monitor operational controls</small></div><b>›</b></a>{% endif %}
+      </aside>
+    </section>
+  </main>
+</div>
+{% endblock %}

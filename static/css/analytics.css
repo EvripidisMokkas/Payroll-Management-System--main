@@ -1,0 +1,10 @@
+.dashboard-heading h1 { font-size: clamp(2rem, 6vw, 4rem); }
+.dashboard-heading p { max-width: 52rem; color: #52606d; }
+.chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1rem; margin: 2rem 0; }
+.chart-card, .warnings, .prediction-notice { background: #fff; border: 1px solid #dfe3e8; border-radius: .8rem; padding: 1.25rem; box-shadow: 0 .2rem .8rem #14213d12; }
+.chart-card strong { display: block; font-size: 2rem; margin: .5rem 0 1rem; }
+.bar { height: .65rem; background: #e9eef7; border-radius: 1rem; margin-bottom: 1rem; overflow: hidden; }
+.bar span { display: block; width: 68%; height: 100%; background: #155eef; }
+.warnings { border-left: .4rem solid #d97706; margin: 1.5rem 0; }
+.prediction-notice { border-left: .4rem solid #155eef; }
+@media (max-width: 38rem) { main { padding-top: 3rem; } .chart-card { padding: 1rem; } }
